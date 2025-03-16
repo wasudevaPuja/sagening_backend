@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace App\Http\Controllers\Auth;
 
@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -18,16 +19,24 @@ class AuthController extends Controller
     {
 
         try {
-            if ($request->username == null) {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'username' => 'required|string',
+                    'password' => 'required|string|min:6',
+                ],
+                [
+                    'username.required' => 'Isikan Username',
+                    'password.required' => 'Isikan Password',
+                    'password.min' => 'Password harus memiliki minimal 6 karakter'
+                ]
+            );
+
+            if ($validator->fails()) {
                 return response()->json([
                     'error' => true,
-                    'messages' => 'Isikan Username'
-                ],422);
-            } else if ($request->password == null) {
-                return response()->json([
-                    'error' => true,
-                    'messages' => 'Isikan Password'
-                ],422);
+                    'messages' => $validator->errors()
+                ], 422);
             }
 
             $user = User::where('username', $request->username)->first();
@@ -62,6 +71,7 @@ class AuthController extends Controller
                 'data' => (object) ['token' => $accessToken, 'refresh_token' => $tokenModel->refresh_token]
             ]);
         } catch (\Throwable $th) {
+            dd($th);
             return response()->json([
                 'error' => true,
                 'messages' => 'Terjadi Kesalahan pada Server',
@@ -71,26 +81,26 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-     try {
-        if (!$request->user()) {
+        try {
+            if (!$request->user()) {
+                return response()->json([
+                    'error' => false,
+                    'messages' => 'Token anda tidak valid',
+                ], 401);
+            }
+
+            $request->user()->currentAccessToken()->delete();
+
             return response()->json([
                 'error' => false,
-                'messages' => 'Token anda tidak valid',
-            ],401);
+                'messages' => 'Anda telah logout',
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'error' => true,
+                'messages' => 'Terjadi Kesalahan pada Server',
+            ]);
         }
-
-        $request->user()->currentAccessToken()->delete();
-
-        return response()->json([
-            'error' => false,
-            'messages' => 'Anda telah logout',
-        ]);
-     } catch (\Throwable $th) {
-        return response()->json([
-            'error' => true,
-            'messages' => 'Terjadi Kesalahan pada Server',
-        ]);
-     }
     }
 
     public function refreshToken(Request $request)
@@ -117,7 +127,7 @@ class AuthController extends Controller
             $token->delete();
 
             // Buat access token dan refresh token baru
-            
+
             $user = User::where('id', $token->tokenable_id)->first();
             $accessToken = $user->createToken('auth_token')->plainTextToken;
             $newRefreshToken = Str::random(64);
