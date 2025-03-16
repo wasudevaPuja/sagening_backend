@@ -22,12 +22,12 @@ class AuthController extends Controller
                 return response()->json([
                     'error' => true,
                     'messages' => 'Isikan Username'
-                ]);
+                ],422);
             } else if ($request->password == null) {
                 return response()->json([
                     'error' => true,
                     'messages' => 'Isikan Password'
-                ]);
+                ],422);
             }
 
             $user = User::where('username', $request->username)->first();
