@@ -71,7 +71,6 @@ class AuthController extends Controller
                 'data' => (object) ['token' => $accessToken, 'refresh_token' => $tokenModel->refresh_token]
             ]);
         } catch (\Throwable $th) {
-            dd($th);
             return response()->json([
                 'error' => true,
                 'messages' => 'Terjadi Kesalahan pada Server',
@@ -131,7 +130,7 @@ class AuthController extends Controller
             $user = User::where('id', $token->tokenable_id)->first();
             $accessToken = $user->createToken('auth_token')->plainTextToken;
             $newRefreshToken = Str::random(64);
-            $expiresAt = Carbon::now()->addHour(); // Refresh token berlaku 1 jam
+            $expiresAt = Carbon::now()->a(dd)Hour(); // Refresh token berlaku 1 jam
 
             // Simpan refresh token baru
             $newToken = PersonalAccessToken::where('tokenable_id', $user->id)->latest()->first();
