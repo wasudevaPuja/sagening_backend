@@ -45,7 +45,7 @@ class AuthController extends Controller
                 return response()->json([
                     'error' => true,
                     'messages' => 'Username atau password salah'
-                ],422);
+                ], 422);
             }
 
             // Hapus token lama jika ada
@@ -53,7 +53,8 @@ class AuthController extends Controller
 
             $accessToken = $user->createToken('auth_token')->plainTextToken;
             $refreshToken = Str::random(64);
-            $expiresAt = Carbon::now()->addHour(); // Refresh token berlaku 1 jam
+            $refreshExpiresAt = Carbon::now()->addMinutes(env('REFRESH_TOKEN_EXPIRY', 60)); // Default 60 menit
+            $tokenExpiresAt = Carbon::now()->addMinutes(env('ACCESS_TOKEN_EXPIRY', 5)); // Default 5 menit
 
             $tokenModel = PersonalAccessToken::where('tokenable_id', $user->id)
                 ->latest()
@@ -61,7 +62,8 @@ class AuthController extends Controller
 
             if ($tokenModel) {
                 $tokenModel->refresh_token = $refreshToken;
-                $tokenModel->refresh_expires_at = $expiresAt;
+                $tokenModel->refresh_expires_at = $refreshExpiresAt;
+                $tokenModel->expires_token_at = $tokenExpiresAt;
                 $tokenModel->save();
             }
 
@@ -119,7 +121,7 @@ class AuthController extends Controller
                 return response()->json([
                     'error' => true,
                     'messages' => 'Token Anda Kadaluarsa',
-                ],401);
+                ], 401);
             }
 
             // Hapus access token lama
@@ -130,13 +132,15 @@ class AuthController extends Controller
             $user = User::where('id', $token->tokenable_id)->first();
             $accessToken = $user->createToken('auth_token')->plainTextToken;
             $newRefreshToken = Str::random(64);
-            $expiresAt = Carbon::now()->addHour(); // Refresh token berlaku 1 jam
+            $refreshExpiresAt = Carbon::now()->addMinutes(env('REFRESH_TOKEN_EXPIRY', 60)); // Default 60 menit
+            $tokenExpiresAt = Carbon::now()->addMinutes(env('ACCESS_TOKEN_EXPIRY', 5)); // Default 5 menit
 
             // Simpan refresh token baru
             $newToken = PersonalAccessToken::where('tokenable_id', $user->id)->latest()->first();
             if ($newToken) {
                 $newToken->refresh_token = $newRefreshToken;
-                $newToken->refresh_expires_at = $expiresAt;
+                $newToken->refresh_expires_at = $refreshExpiresAt;
+                $newToken->expires_token_at = $tokenExpiresAt;
                 $newToken->save();
             }
 
