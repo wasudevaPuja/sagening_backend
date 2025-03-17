@@ -45,7 +45,7 @@ class AuthController extends Controller
                 return response()->json([
                     'error' => true,
                     'messages' => 'Username atau password salah'
-                ]);
+                ],422);
             }
 
             // Hapus token lama jika ada
