@@ -130,7 +130,7 @@ class AuthController extends Controller
             $user = User::where('id', $token->tokenable_id)->first();
             $accessToken = $user->createToken('auth_token')->plainTextToken;
             $newRefreshToken = Str::random(64);
-            $expiresAt = Carbon::now()->a(dd)Hour(); // Refresh token berlaku 1 jam
+            $expiresAt = Carbon::now()->addHour(); // Refresh token berlaku 1 jam
 
             // Simpan refresh token baru
             $newToken = PersonalAccessToken::where('tokenable_id', $user->id)->latest()->first();
