@@ -119,7 +119,7 @@ class AuthController extends Controller
                 return response()->json([
                     'error' => true,
                     'messages' => 'Token Anda Kadaluarsa',
-                ]);
+                ],401);
             }
 
             // Hapus access token lama
